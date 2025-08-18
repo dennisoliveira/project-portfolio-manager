@@ -8,8 +8,8 @@ Este repositório contém a implementação do desafio técnico para vaga de **D
 
 ## 🚀 Milestones
 
-1. [ ] **Setup do projeto** — `pom.xml`, configs base (`application.yml`)
-2. [ ] **Entidades e migrações** — criação das tabelas via Flyway (`V1__init.sql`)
+1. [x] **Setup do projeto** — `pom.xml`, configs base (`application.yml`)
+2. [x] **Entidades e migrações** — criação das tabelas via Flyway (`V1__init.sql`)
 3. [ ] **Serviços de domínio** — `RiskClassifier`, `StatusTransitionValidator` + testes
 4. [ ] **CRUD de projetos** — operações básicas + validações
 5. [ ] **Transições de status** — regras de sequência e não exclusão
