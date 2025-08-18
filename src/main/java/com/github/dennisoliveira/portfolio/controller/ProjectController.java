@@ -2,6 +2,7 @@ package com.github.dennisoliveira.portfolio.controller;
 
 import com.github.dennisoliveira.portfolio.domain.Project;
 import com.github.dennisoliveira.portfolio.domain.ProjectStatus;
+import com.github.dennisoliveira.portfolio.dto.ChangeStatusRequest;
 import com.github.dennisoliveira.portfolio.dto.ProjectCreateRequest;
 import com.github.dennisoliveira.portfolio.dto.ProjectResponse;
 import com.github.dennisoliveira.portfolio.mapper.ProjectMapper;
@@ -48,4 +49,29 @@ public class ProjectController {
         return service.list(name, status, managerId, startDateFrom, startDateTo, expectedEndFrom, expectedEndTo, pageable)
                 .map(p -> mapper.toResponse(p, riskClassifier));
     }
+
+    @GetMapping("/{id}")
+    public ProjectResponse getById(@PathVariable Long id) {
+        Project p = service.getById(id);
+        return mapper.toResponse(p, riskClassifier);
+    }
+
+    @PutMapping("/{id}")
+    public ProjectResponse update(@PathVariable Long id, @Valid @RequestBody ProjectCreateRequest body) {
+        Project updated = service.update(id, body);
+        return mapper.toResponse(updated, riskClassifier);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
+    }
+
+    @PatchMapping("/{id}/status")
+    public ProjectResponse changeStatus(@PathVariable Long id, @RequestBody @Valid ChangeStatusRequest body) {
+        Project p = service.changeStatus(id, body.newStatus(), body.actualEndDate());
+        return mapper.toResponse(p, riskClassifier);
+    }
+
 }
