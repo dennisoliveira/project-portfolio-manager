@@ -8,6 +8,7 @@ import com.github.dennisoliveira.portfolio.dto.ProjectResponse;
 import com.github.dennisoliveira.portfolio.mapper.ProjectMapper;
 import com.github.dennisoliveira.portfolio.service.ProjectService;
 import com.github.dennisoliveira.portfolio.service.domain.RiskClassifier;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,7 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/projects")
 @RequiredArgsConstructor
+@Tag(name = "Projects")
 public class ProjectController {
 
     private final ProjectService service;
