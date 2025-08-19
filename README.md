@@ -19,22 +19,24 @@ Este repositório contém a implementação do desafio técnico para vaga de **D
 8. [x] **Listagem com paginação e filtros**
 9. [x] **Relatório resumido do portfólio**
 10. [x] **Tratamento global de exceções**
-11. [ ] **Segurança (Spring Security Basic Auth)**
-12. [ ] **Swagger/OpenAPI documentado**
-13. [ ] **Cobertura de testes >= 70% (JaCoCo)**
-14. [ ] **README final atualizado**
+11. [x] **Segurança (Spring Security Basic Auth)**
+12. [x] **Swagger/OpenAPI documentado**
+13. [x] **README final atualizado**
+14. [x] **Cobertura de testes >= 30% (JaCoCo)**
+15. [ ] **Cobertura de testes >= 70% (JaCoCo)**
 
 ---
 
 ## ✅ Definition of Done (DoD)
 
 * [x] Endpoints possuem **validações** e retornam **erros padronizados**
-* [ ] Regras de negócio **implementadas e testadas**
-* [ ] Cobertura de testes **≥ 70%**
-* [ ] API **documentada no Swagger/OpenAPI**
-* [ ] **Segurança básica** aplicada
+* [x] Regras de negócio **implementadas e testadas**
+* [x] API **documentada no Swagger/OpenAPI**
+* [x] **Segurança básica** aplicada
 * [x] **Migrações Flyway** atualizadas e consistentes
-* [ ] **README** atualizado com progresso e instruções de execução
+* [x] **README** atualizado com progresso e instruções de execução
+* [x] Cobertura de testes **≥ 30%**
+* [ ] Cobertura de testes **≥ 70%**
 
 ---
 
@@ -55,9 +57,10 @@ Este repositório contém a implementação do desafio técnico para vaga de **D
 
 * [x] Arquitetura em camadas (MVC)
 * [x] DTOs + mapeamento (MapStruct)
-* [ ] PostgreSQL + Flyway + H2 (testes)
-* [ ] Segurança básica (Basic Auth)
-* [ ] Swagger/OpenAPI ativo
+* [x] PostgreSQL + Flyway + H2 (testes)
+* [x] Segurança básica (Basic Auth)
+* [x] Swagger/OpenAPI ativo
 * [x] Tratamento global de exceções
+* [x] README atualizado
+* [x] Testes unitários com cobertura ≥ 30%
 * [ ] Testes unitários com cobertura ≥ 70%
-* [ ] README atualizado
