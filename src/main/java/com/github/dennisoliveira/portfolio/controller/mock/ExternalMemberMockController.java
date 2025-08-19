@@ -1,5 +1,6 @@
 package com.github.dennisoliveira.portfolio.controller.mock;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
@@ -55,6 +56,7 @@ public class ExternalMemberMockController {
         store.put(SEED_EMPLOYEE2_ID, new ExternalMemberDTO(SEED_EMPLOYEE2_ID, "Carol Employee", ExternalRole.FUNCIONARIO));
     }
 
+    @Operation(summary = "Criar um novo usuário externo")
     @PostMapping
     public ResponseEntity<?> create(@Valid @RequestBody CreateMemberRequest req) {
         final ExternalRole role;
@@ -75,6 +77,7 @@ public class ExternalMemberMockController {
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
+    @Operation(summary = "Exibir usuário externo")
     @GetMapping("/{id}")
     public ResponseEntity<ExternalMemberDTO> get(@PathVariable String id) {
         ExternalMemberDTO dto = store.get(id);

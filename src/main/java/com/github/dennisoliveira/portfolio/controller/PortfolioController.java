@@ -17,8 +17,8 @@ public class PortfolioController {
 
     private final PortfolioReportService reportService;
 
+    @Operation(summary = "Gerar relatório de projetos")
     @GetMapping("/report")
-    @Operation(summary = "Get portfolio summary report")
     public PortfolioReportResponse report() {
         return reportService.build();
     }
