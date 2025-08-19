@@ -8,20 +8,33 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpecificationExecutor<Project> {
-    @Query("select p.status as status, count(p) as qty from Project p group by p.status")
-    List<Object[]> countByStatus();
-
-    @Query("select p.status as status, coalesce(sum(p.totalBudget), 0) as total from Project p group by p.status")
-    List<Object[]> sumBudgetByStatus();
 
     @Query("""
-       select p.startDate, p.actualEndDate
-       from Project p
-       where p.status = com.github.dennisoliveira.portfolio.domain.ProjectStatus.ENCERRADO
-         and p.actualEndDate is not null
+      select p.status, count(p), coalesce(sum(p.totalBudget), 0)
+      from Project p
+      group by p.status
     """)
-    List<Object[]> findClosedProjectDates();
+    List<Object[]> aggregateByStatusRaw();
 
-    @Query(value = "select count(distinct pm.member_id) from project_member pm", nativeQuery = true)
+    @Query(value = """
+        select coalesce(
+                 avg((p.actual_end_date - p.start_date))::float8,
+                 0
+               )
+        from project p
+        where p.status = 'ENCERRADO'
+          and p.actual_end_date is not null
+    """, nativeQuery = true)
+    Double avgDurationDaysClosedProjects();
+
+    @Query(value = "select count(distinct pm.member_external_id) from project_member pm", nativeQuery = true)
     Long countDistinctMembersAllocated();
+
+    @Query(value = """
+        select count(distinct pm.member_external_id)
+        from project_member pm
+        join project p on p.id = pm.project_id
+        where p.status not in ('ENCERRADO','CANCELADO')
+    """, nativeQuery = true)
+    Long countDistinctMembersAllocatedActive();
 }
