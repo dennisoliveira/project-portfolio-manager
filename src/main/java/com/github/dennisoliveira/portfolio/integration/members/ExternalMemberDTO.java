@@ -8,4 +8,7 @@ public record ExternalMemberDTO(
     public boolean isFuncionario() {
         return "FUNCIONARIO".equalsIgnoreCase(role);
     }
+    public boolean isGerente() {
+        return "GERENTE".equalsIgnoreCase(role);
+    }
 }

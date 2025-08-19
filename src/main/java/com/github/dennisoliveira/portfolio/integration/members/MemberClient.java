@@ -1,10 +1,11 @@
 package com.github.dennisoliveira.portfolio.integration.members;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 
@@ -20,11 +21,25 @@ public class MemberClient {
     public Optional<ExternalMemberDTO> getById(String id) {
         return client.get()
                 .uri("/members/{id}", id)
-                .retrieve()
-                .onStatus(HttpStatus.NOT_FOUND::equals, resp -> Mono.empty())
-                .bodyToMono(ExternalMemberDTO.class)
+                .exchangeToMono(resp -> {
+                    if (resp.statusCode().is2xxSuccessful()) {
+                        return resp.bodyToMono(ExternalMemberDTO.class);
+                    }
+                    if (resp.statusCode().value() == 404) {
+                        return Mono.empty();
+                    }
+
+                    return resp.bodyToMono(String.class)
+                            .defaultIfEmpty("")
+                            .flatMap(body -> Mono.error(new ExternalServiceException(
+                                    "Members API error: " + resp.statusCode() + " " + body)));
+                })
+                .timeout(Duration.ofSeconds(5))
                 .map(Optional::of)
                 .switchIfEmpty(Mono.just(Optional.empty()))
+                .onErrorResume(WebClientResponseException.class, e ->
+
+                        Mono.just(Optional.empty()))
                 .block();
     }
 
@@ -34,6 +49,7 @@ public class MemberClient {
                 .bodyValue(Map.of("name", name, "role", role))
                 .retrieve()
                 .bodyToMono(ExternalMemberDTO.class)
+                .timeout(Duration.ofSeconds(5))
                 .block();
     }
 }

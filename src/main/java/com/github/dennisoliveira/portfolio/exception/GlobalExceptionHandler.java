@@ -207,7 +207,7 @@ public class GlobalExceptionHandler {
     }
 
     private static void addCommon(ProblemDetail pd, HttpServletRequest req) {
-        pd.setInstance(URI.create(req.getRequestURI())); // RFC 7807
+        pd.setInstance(URI.create(req.getRequestURI()));
         pd.setProperty("timestamp", Instant.now().toString());
         pd.setProperty("method", nonNull(req.getMethod(), "UNKNOWN"));
         pd.setProperty("locale", LocaleContextHolder.getLocale().toLanguageTag());

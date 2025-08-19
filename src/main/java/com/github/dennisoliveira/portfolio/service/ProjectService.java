@@ -5,6 +5,7 @@ import com.github.dennisoliveira.portfolio.domain.ProjectStatus;
 import com.github.dennisoliveira.portfolio.dto.ProjectCreateRequest;
 import com.github.dennisoliveira.portfolio.exception.BusinessRuleException;
 import com.github.dennisoliveira.portfolio.exception.NotFoundException;
+import com.github.dennisoliveira.portfolio.integration.members.MemberClient;
 import com.github.dennisoliveira.portfolio.mapper.ProjectMapper;
 import com.github.dennisoliveira.portfolio.repository.ProjectRepository;
 import com.github.dennisoliveira.portfolio.service.domain.RiskClassifier;
@@ -24,10 +25,11 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class ProjectService {
 
-    private final StatusTransitionValidator transitionValidator;
     private final ProjectRepository projectRepo;
-    private final ProjectMapper mapper;
+    private final StatusTransitionValidator transitionValidator;
     private final RiskClassifier riskClassifier;
+    private final ProjectMapper mapper;
+    private final MemberClient memberClient;
 
     @Transactional
     public Project create(ProjectCreateRequest dto) {
@@ -35,6 +37,8 @@ public class ProjectService {
 
         validateBudget(p.getTotalBudget());
         validateExpectedVsStart(dto.expectedEndDate(), dto.startDate());
+
+        p.setManagerExternalId(resolveAndValidateManagerId(dto.managerExternalId()));
 
         if (p.getStatus() == null) {
             p.setStatus(ProjectStatus.EM_ANALISE);
@@ -102,10 +106,13 @@ public class ProjectService {
         p.setActualEndDate(dto.actualEndDate());
         p.setTotalBudget(dto.totalBudget());
         p.setDescription(dto.description());
-        p.setManagerExternalId(dto.managerExternalId());
 
         validateBudget(p.getTotalBudget());
         validateExpectedVsStart(p.getExpectedEndDate(), p.getStartDate());
+
+        if (!java.util.Objects.equals(p.getManagerExternalId(), dto.managerExternalId())) {
+            p.setManagerExternalId(resolveAndValidateManagerId(dto.managerExternalId()));
+        }
 
         p.setRisk(riskClassifier.classify(p.getTotalBudget(), p.getStartDate(), p.getExpectedEndDate()));
 
@@ -130,17 +137,21 @@ public class ProjectService {
 
         if (newStatus == ProjectStatus.ENCERRADO) {
             LocalDate end = (requestActualEndDate != null) ? requestActualEndDate : p.getActualEndDate();
-            if (end == null) {
-                throw new BusinessRuleException("actualEndDate is required when finishing (ENCERRADO)");
-            }
-            if (end.isBefore(p.getStartDate())) {
-                throw new BusinessRuleException("actualEndDate must be >= startDate");
-            }
+            if (end == null) throw new BusinessRuleException("actualEndDate is required when finishing (ENCERRADO)");
+            if (end.isBefore(p.getStartDate())) throw new BusinessRuleException("actualEndDate must be >= startDate");
             p.setActualEndDate(end);
         }
 
         p.setStatus(newStatus);
         return projectRepo.save(p);
+    }
+
+    private String resolveAndValidateManagerId(String externalId) {
+        var maybe = memberClient.getById(externalId);
+        if (maybe.isEmpty()) throw new BusinessRuleException("Manager not found in external Members API id=" + externalId);
+        var manager = maybe.get();
+        if (!manager.isGerente()) throw new BusinessRuleException("The specified member does not have the MANAGER role");
+        return manager.id();
     }
 
     private void validateBudget(BigDecimal totalBudget) {
