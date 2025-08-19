@@ -6,33 +6,24 @@ import com.github.dennisoliveira.portfolio.domain.ProjectStatus;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public interface ProjectMemberRepository extends JpaRepository<ProjectMember, ProjectMemberId> {
 
-    @Query("""
-      select pm.id.memberExternalId
-      from ProjectMember pm
-      where pm.project.id = :pid
-      order by pm.id.memberExternalId
-    """)
-    List<String> findMemberIdsByProject(@Param("pid") Long projectId);
+    @Query("select pm.id.memberExternalId from ProjectMember pm where pm.id.projectId = :projectId")
+    List<String> findMemberIdsByProject(@Param("projectId") Long projectId);
 
     @Query("""
-      select count(distinct pm.project.id)
+      select count(distinct pm.id.projectId)
       from ProjectMember pm
-      where pm.id.memberExternalId = :mid
-        and pm.project.status not in :closed
+      where pm.id.memberExternalId = :memberId
+        and pm.project.status not in :closedStatuses
     """)
-    long countActiveProjectsForMember(@Param("mid") String memberExternalId,
-                                      @Param("closed") Collection<ProjectStatus> closed);
-
-    boolean existsById(ProjectMemberId id);
-
-    long countByProject_Id(Long projectId);
+    long countActiveProjectsForMember(@Param("memberId") String memberId,
+                                      @Param("closedStatuses") Set<ProjectStatus> closedStatuses);
 
     @Modifying
-    @Query("delete from ProjectMember pm where pm.id.projectId = :pid and pm.id.memberExternalId = :mid")
-    void deleteByProjectIdAndMember(@Param("pid") Long projectId, @Param("mid") String memberExternalId);
+    @Query("delete from ProjectMember pm where pm.id.projectId = :projectId and pm.id.memberExternalId = :memberId")
+    void deleteByProjectIdAndMember(@Param("projectId") Long projectId, @Param("memberId") String memberId);
 }
