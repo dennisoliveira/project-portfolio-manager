@@ -196,8 +196,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(pd);
     }
 
-    // --------- helpers ---------
-
     private Map<String, Object> toFieldErrorPayload(FieldError fe) {
         return Map.of(
                 "field", fe.getField(),

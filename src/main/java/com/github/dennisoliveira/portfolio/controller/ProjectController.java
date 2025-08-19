@@ -2,12 +2,12 @@ package com.github.dennisoliveira.portfolio.controller;
 
 import com.github.dennisoliveira.portfolio.domain.Project;
 import com.github.dennisoliveira.portfolio.domain.ProjectStatus;
+import com.github.dennisoliveira.portfolio.dto.AllocationRequest;
 import com.github.dennisoliveira.portfolio.dto.ChangeStatusRequest;
 import com.github.dennisoliveira.portfolio.dto.ProjectCreateRequest;
 import com.github.dennisoliveira.portfolio.dto.ProjectResponse;
 import com.github.dennisoliveira.portfolio.mapper.ProjectMapper;
 import com.github.dennisoliveira.portfolio.service.ProjectService;
-import com.github.dennisoliveira.portfolio.service.domain.RiskClassifier;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/projects")
@@ -29,7 +30,7 @@ public class ProjectController {
 
     private final ProjectService service;
     private final ProjectMapper mapper;
-    private final RiskClassifier riskClassifier;
+    private final ProjectService projectService;
 
     @PostMapping
     public ResponseEntity<ProjectResponse> create(@Valid @RequestBody ProjectCreateRequest body) {
@@ -74,6 +75,29 @@ public class ProjectController {
     public ProjectResponse changeStatus(@PathVariable Long id, @RequestBody @Valid ChangeStatusRequest body) {
         Project p = service.changeStatus(id, body.newStatus(), body.actualEndDate());
         return mapper.toResponse(p);
+    }
+
+    @PostMapping("/{id}/allocations")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void allocateMembers(
+            @PathVariable Long id,
+            @Valid @RequestBody AllocationRequest req
+    ) {
+        projectService.allocateMembers(id, req.memberExternalIds());
+    }
+
+    @DeleteMapping("/{id}/allocations/{memberExternalId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeMemberAllocation(
+            @PathVariable Long id,
+            @PathVariable String memberExternalId
+    ) {
+        projectService.removeMemberAllocation(id, memberExternalId);
+    }
+
+    @GetMapping("/{id}/allocations")
+    public List<String> listAllocatedMembers(@PathVariable Long id) {
+        return projectService.listAllocatedMembers(id);
     }
 
 }

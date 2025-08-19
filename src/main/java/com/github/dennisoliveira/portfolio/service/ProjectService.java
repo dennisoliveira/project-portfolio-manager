@@ -1,17 +1,21 @@
 package com.github.dennisoliveira.portfolio.service;
 
 import com.github.dennisoliveira.portfolio.domain.Project;
+import com.github.dennisoliveira.portfolio.domain.ProjectMember;
+import com.github.dennisoliveira.portfolio.domain.ProjectMemberId;
 import com.github.dennisoliveira.portfolio.domain.ProjectStatus;
 import com.github.dennisoliveira.portfolio.dto.ProjectCreateRequest;
 import com.github.dennisoliveira.portfolio.exception.BusinessRuleException;
 import com.github.dennisoliveira.portfolio.exception.NotFoundException;
 import com.github.dennisoliveira.portfolio.integration.members.MemberClient;
 import com.github.dennisoliveira.portfolio.mapper.ProjectMapper;
+import com.github.dennisoliveira.portfolio.repository.ProjectMemberRepository;
 import com.github.dennisoliveira.portfolio.repository.ProjectRepository;
 import com.github.dennisoliveira.portfolio.service.domain.RiskClassifier;
 import com.github.dennisoliveira.portfolio.service.domain.StatusTransitionValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -20,16 +24,21 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class ProjectService {
 
     private final ProjectRepository projectRepo;
+    private final ProjectMemberRepository projectMemberRepo;
     private final StatusTransitionValidator transitionValidator;
     private final RiskClassifier riskClassifier;
     private final ProjectMapper mapper;
     private final MemberClient memberClient;
+
+    private static final Set<ProjectStatus> CLOSED_STATUSES =
+            EnumSet.of(ProjectStatus.ENCERRADO, ProjectStatus.CANCELADO);
 
     @Transactional
     public Project create(ProjectCreateRequest dto) {
@@ -144,6 +153,96 @@ public class ProjectService {
 
         p.setStatus(newStatus);
         return projectRepo.save(p);
+    }
+
+    @Transactional
+    public List<String> listAllocatedMembers(Long projectId) {
+        getById(projectId);
+        return projectMemberRepo.findMemberIdsByProject(projectId);
+    }
+
+    @Transactional
+    public void allocateMembers(Long projectId, List<String> memberExternalIds) {
+        if (memberExternalIds == null || memberExternalIds.isEmpty()) {
+            throw new BusinessRuleException("You must provide at least one memberExternalId.");
+        }
+
+        Set<String> toAllocate = new HashSet<>(memberExternalIds);
+
+        Project project = getById(projectId);
+
+        if (CLOSED_STATUSES.contains(project.getStatus())) {
+            throw new BusinessRuleException("Allocations are not allowed for closed/canceled projects.");
+        }
+
+        List<String> current = projectMemberRepo.findMemberIdsByProject(projectId);
+        Set<String> currentSet = new HashSet<>(current);
+
+        long newOnes = toAllocate.stream().filter(id -> !currentSet.contains(id)).count();
+        long finalCount = currentSet.size() + newOnes;
+        if (finalCount > 10) {
+            throw new BusinessRuleException("Project allocation limit exceeded (max=10).");
+        }
+
+        for (String externalId : toAllocate) {
+
+            var maybe = memberClient.getById(externalId);
+            if (maybe.isEmpty()) {
+                throw new BusinessRuleException(
+                        "Member not found in external Members API (id=%s).".formatted(externalId));
+            }
+            var member = maybe.get();
+            if (!member.isFuncionario()) {
+                throw new BusinessRuleException(
+                        "Only members with role FUNCIONARIO can be allocated (id=%s).".formatted(externalId));
+            }
+
+            long activeCount = projectMemberRepo.countActiveProjectsForMember(externalId, CLOSED_STATUSES);
+
+            boolean alreadyHere = currentSet.contains(externalId);
+            long effectiveActive = alreadyHere ? activeCount : activeCount + 1;
+            if (effectiveActive > 3) {
+                throw new BusinessRuleException(
+                        "Member exceeds active projects limit (max=3) (id=%s).".formatted(externalId));
+            }
+
+            if (!alreadyHere) {
+                var id = new ProjectMemberId(projectId, externalId);
+                if (!projectMemberRepo.existsById(id)) {
+                    try {
+                        projectMemberRepo.save(new ProjectMember(project, externalId));
+                    } catch (DataIntegrityViolationException ignore) {
+
+                    }
+                }
+            }
+        }
+
+        if (finalCount < 1) {
+            throw new BusinessRuleException("Project must have at least 1 allocated member.");
+        }
+    }
+
+    @Transactional
+    public void removeMemberAllocation(Long projectId, String memberExternalId) {
+        Objects.requireNonNull(memberExternalId, "memberExternalId is required");
+
+        Project project = getById(projectId);
+
+        if (CLOSED_STATUSES.contains(project.getStatus())) {
+            throw new BusinessRuleException("Allocations are not allowed for closed/canceled projects.");
+        }
+
+        List<String> current = projectMemberRepo.findMemberIdsByProject(projectId);
+        if (!current.contains(memberExternalId)) {
+            return;
+        }
+
+        if (current.size() <= 1) {
+            throw new BusinessRuleException("Project must have at least 1 allocated member.");
+        }
+
+        projectMemberRepo.deleteByProjectIdAndMember(projectId, memberExternalId);
     }
 
     private String resolveAndValidateManagerId(String externalId) {
