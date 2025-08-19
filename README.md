@@ -10,14 +10,14 @@ Este repositório contém a implementação do desafio técnico para vaga de **D
 
 1. [x] **Setup do projeto** — `pom.xml`, configs base (`application.yml`)
 2. [x] **Entidades e migrações** — criação das tabelas via Flyway (`V1__init.sql`)
-3. [ ] **Serviços de domínio** — `RiskClassifier`, `StatusTransitionValidator` + testes
-4. [ ] **CRUD de projetos** — operações básicas + validações
-5. [ ] **Transições de status** — regras de sequência e não exclusão
+3. [x] **Serviços de domínio** — `RiskClassifier`, `StatusTransitionValidator` + testes
+4. [x] **CRUD de projetos** — operações básicas + validações
+5. [x] **Transições de status** — regras de sequência e não exclusão
 6. [ ] **Integração API externa de membros (mock)** — criar/consultar membros
 7. [ ] **Associação de membros a projetos** — regras de limite (1–10) e máximo de 3 projetos ativos
-8. [ ] **Listagem com paginação e filtros**
-9. [ ] **Relatório resumido do portfólio**
-10. [ ] **Tratamento global de exceções**
+8. [x] **Listagem com paginação e filtros**
+9. [x] **Relatório resumido do portfólio**
+10. [x] **Tratamento global de exceções**
 11. [ ] **Segurança (Spring Security Basic Auth)**
 12. [ ] **Swagger/OpenAPI documentado**
 13. [ ] **Cobertura de testes >= 70% (JaCoCo)**
@@ -41,14 +41,14 @@ Este repositório contém a implementação do desafio técnico para vaga de **D
 
 ### Funcionalidades
 
-* [ ] CRUD de Projetos
-* [ ] Status fixos e transições válidas
-* [ ] Regra de não exclusão (status iniciado, em andamento, encerrado)
-* [ ] Classificação dinâmica de risco
+* [x] CRUD de Projetos
+* [x] Status fixos e transições válidas
+* [x] Regra de não exclusão (status iniciado, em andamento, encerrado)
+* [x] Classificação dinâmica de risco
 * [ ] Integração com API externa (mockada) de membros
 * [ ] Associação de membros a projetos (com restrições)
-* [ ] Listagem com paginação e filtros
-* [ ] Relatório resumido do portfólio
+* [x] Listagem com paginação e filtros
+* [x] Relatório resumido do portfólio
 
 ### Não Funcionais
 
@@ -57,6 +57,6 @@ Este repositório contém a implementação do desafio técnico para vaga de **D
 * [ ] PostgreSQL + Flyway + H2 (testes)
 * [ ] Segurança básica (Basic Auth)
 * [ ] Swagger/OpenAPI ativo
-* [ ] Tratamento global de exceções
+* [x] Tratamento global de exceções
 * [ ] Testes unitários com cobertura ≥ 70%
 * [ ] README atualizado
