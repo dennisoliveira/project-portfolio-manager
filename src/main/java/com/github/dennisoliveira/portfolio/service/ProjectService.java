@@ -6,8 +6,8 @@ import com.github.dennisoliveira.portfolio.dto.ProjectCreateRequest;
 import com.github.dennisoliveira.portfolio.exception.BusinessRuleException;
 import com.github.dennisoliveira.portfolio.exception.NotFoundException;
 import com.github.dennisoliveira.portfolio.mapper.ProjectMapper;
-import com.github.dennisoliveira.portfolio.repository.MemberRepository;
 import com.github.dennisoliveira.portfolio.repository.ProjectRepository;
+import com.github.dennisoliveira.portfolio.service.domain.RiskClassifier;
 import com.github.dennisoliveira.portfolio.service.domain.StatusTransitionValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,27 +26,21 @@ public class ProjectService {
 
     private final StatusTransitionValidator transitionValidator;
     private final ProjectRepository projectRepo;
-    private final MemberRepository memberRepo;
     private final ProjectMapper mapper;
+    private final RiskClassifier riskClassifier;
 
     @Transactional
     public Project create(ProjectCreateRequest dto) {
         Project p = mapper.toEntity(dto);
 
-        if (p.getTotalBudget() == null || p.getTotalBudget().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessRuleException("totalBudget must be > 0");
-        }
-        if (dto.expectedEndDate().isBefore(dto.startDate())) {
-            throw new BusinessRuleException("expectedEndDate must be >= startDate");
-        }
-
-        var manager = memberRepo.findById(dto.managerId())
-                .orElseThrow(() -> new NotFoundException("Manager not found"));
-        p.setManager(manager);
+        validateBudget(p.getTotalBudget());
+        validateExpectedVsStart(dto.expectedEndDate(), dto.startDate());
 
         if (p.getStatus() == null) {
             p.setStatus(ProjectStatus.EM_ANALISE);
         }
+
+        p.setRisk(riskClassifier.classify(p.getTotalBudget(), p.getStartDate(), p.getExpectedEndDate()));
 
         return projectRepo.save(p);
     }
@@ -55,7 +49,7 @@ public class ProjectService {
     public Page<Project> list(
             String name,
             ProjectStatus status,
-            Long managerId,
+            String managerExternalId,
             LocalDate startDateFrom,
             LocalDate startDateTo,
             LocalDate expectedEndFrom,
@@ -73,8 +67,8 @@ public class ProjectService {
             spec = spec.and((root, q, cb) -> cb.equal(root.get("status"), status));
         }
 
-        if (managerId != null) {
-            spec = spec.and((root, q, cb) -> cb.equal(root.get("manager").get("id"), managerId));
+        if (managerExternalId != null && !managerExternalId.isBlank()) {
+            spec = spec.and((root, q, cb) -> cb.equal(root.get("managerExternalId"), managerExternalId));
         }
 
         if (startDateFrom != null) {
@@ -105,19 +99,15 @@ public class ProjectService {
         p.setName(dto.name());
         p.setStartDate(dto.startDate());
         p.setExpectedEndDate(dto.expectedEndDate());
+        p.setActualEndDate(dto.actualEndDate());
         p.setTotalBudget(dto.totalBudget());
         p.setDescription(dto.description());
+        p.setManagerExternalId(dto.managerExternalId());
 
-        if (p.getTotalBudget() == null || p.getTotalBudget().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessRuleException("totalBudget must be > 0");
-        }
-        if (dto.expectedEndDate().isBefore(dto.startDate())) {
-            throw new BusinessRuleException("expectedEndDate must be >= startDate");
-        }
+        validateBudget(p.getTotalBudget());
+        validateExpectedVsStart(p.getExpectedEndDate(), p.getStartDate());
 
-        var manager = memberRepo.findById(dto.managerId())
-                .orElseThrow(() -> new NotFoundException("Manager not found"));
-        p.setManager(manager);
+        p.setRisk(riskClassifier.classify(p.getTotalBudget(), p.getStartDate(), p.getExpectedEndDate()));
 
         return projectRepo.save(p);
     }
@@ -151,5 +141,17 @@ public class ProjectService {
 
         p.setStatus(newStatus);
         return projectRepo.save(p);
+    }
+
+    private void validateBudget(BigDecimal totalBudget) {
+        if (totalBudget == null || totalBudget.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessRuleException("totalBudget must be > 0");
+        }
+    }
+
+    private void validateExpectedVsStart(LocalDate expectedEnd, LocalDate start) {
+        if (expectedEnd.isBefore(start)) {
+            throw new BusinessRuleException("expectedEndDate must be >= startDate");
+        }
     }
 }

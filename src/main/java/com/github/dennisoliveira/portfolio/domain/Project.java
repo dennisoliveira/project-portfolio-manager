@@ -2,26 +2,23 @@ package com.github.dennisoliveira.portfolio.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "project", indexes = {
-        @Index(name = "ix_project_status", columnList = "status"),
-        @Index(name = "ix_project_manager", columnList = "manager_id")
-})
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "project")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Project {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 150)
+    @Column(length = 150, nullable = false)
     private String name;
 
     @Column(name = "start_date", nullable = false)
@@ -36,42 +33,34 @@ public class Project {
     @Column(name = "total_budget", nullable = false, precision = 15, scale = 2)
     private BigDecimal totalBudget;
 
-    @Column(columnDefinition = "text")
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "manager_id", nullable = false)
-    private Member manager;
+    @Column(name = "manager_external_id", length = 100, nullable = false)
+    private String managerExternalId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(length = 30, nullable = false)
     private ProjectStatus status;
 
-    @ManyToMany
-    @JoinTable(
-            name = "project_member",
-            joinColumns = @JoinColumn(name = "project_id"),
-            inverseJoinColumns = @JoinColumn(name = "member_id")
-    )
-    @Builder.Default
-    private Set<Member> members = new LinkedHashSet<>();
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10, nullable = false)
+    private Risk risk;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private LocalDateTime updatedAt;
 
     @PrePersist
-    public void prePersist() {
-        Instant now = Instant.now();
-        createdAt = now;
-        updatedAt = now;
-        if (status == null) status = ProjectStatus.EM_ANALISE;
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
-    public void preUpdate() {
-        updatedAt = Instant.now();
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }

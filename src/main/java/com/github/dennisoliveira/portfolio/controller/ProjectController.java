@@ -34,34 +34,34 @@ public class ProjectController {
     @PostMapping
     public ResponseEntity<ProjectResponse> create(@Valid @RequestBody ProjectCreateRequest body) {
         Project saved = service.create(body);
-        return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(saved, riskClassifier));
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(saved));
     }
 
     @GetMapping
     public Page<ProjectResponse> listPaged(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) ProjectStatus status,
-            @RequestParam(required = false) Long managerId,
+            @RequestParam(required = false) String managerExternalId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDateTo,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate expectedEndFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate expectedEndTo,
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
-        return service.list(name, status, managerId, startDateFrom, startDateTo, expectedEndFrom, expectedEndTo, pageable)
-                .map(p -> mapper.toResponse(p, riskClassifier));
+        return service.list(name, status, managerExternalId, startDateFrom, startDateTo, expectedEndFrom, expectedEndTo, pageable)
+                .map(mapper::toResponse);
     }
 
     @GetMapping("/{id}")
     public ProjectResponse getById(@PathVariable Long id) {
         Project p = service.getById(id);
-        return mapper.toResponse(p, riskClassifier);
+        return mapper.toResponse(p);
     }
 
     @PutMapping("/{id}")
     public ProjectResponse update(@PathVariable Long id, @Valid @RequestBody ProjectCreateRequest body) {
         Project updated = service.update(id, body);
-        return mapper.toResponse(updated, riskClassifier);
+        return mapper.toResponse(updated);
     }
 
     @DeleteMapping("/{id}")
@@ -73,7 +73,7 @@ public class ProjectController {
     @PatchMapping("/{id}/status")
     public ProjectResponse changeStatus(@PathVariable Long id, @RequestBody @Valid ChangeStatusRequest body) {
         Project p = service.changeStatus(id, body.newStatus(), body.actualEndDate());
-        return mapper.toResponse(p, riskClassifier);
+        return mapper.toResponse(p);
     }
 
 }

@@ -11,5 +11,5 @@ public record ProjectCreateRequest(
         LocalDate actualEndDate,
         @NotNull @Positive BigDecimal totalBudget,
         String description,
-        @NotNull Long managerId
+        @NotNull String managerExternalId
 ) {}

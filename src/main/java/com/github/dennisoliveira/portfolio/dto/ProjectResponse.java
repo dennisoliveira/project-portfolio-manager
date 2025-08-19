@@ -12,7 +12,7 @@ public record ProjectResponse(
         LocalDate actualEndDate,
         BigDecimal totalBudget,
         String description,
-        Long managerId,
+        String managerExternalId,
         ProjectStatus status,
         String risk
 ) {}
