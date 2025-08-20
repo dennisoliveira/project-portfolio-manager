@@ -3,6 +3,36 @@
 ## 📖 Visão do Projeto
 
 Este repositório contém a implementação do desafio técnico para vaga de **Desenvolvedor Java**.
+---
+
+## Ambiente de dev -  H2
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+## Ambiente de prod - PostgreSQL
+
+```bash
+docker run --name portfolio-postgres \
+  -e POSTGRES_USER=admin \
+  -e POSTGRES_PASSWORD=admin \
+  -e POSTGRES_DB=portfolio \
+  -p 5432:5432 -d postgres:16
+  
+./mvnw spring-boot:run
+```
+
+## Swagger
+
+http://localhost:8080/swagger-ui/index.html
+
+```
+Mock: 
+GERENTE: "00000000-0000-0000-0000-000000000001"
+FUNCIONARIO: "00000000-0000-0000-0000-000000000002"
+FUNCIONARIO: "00000000-0000-0000-0000-000000000003"
+```
 
 ---
 
